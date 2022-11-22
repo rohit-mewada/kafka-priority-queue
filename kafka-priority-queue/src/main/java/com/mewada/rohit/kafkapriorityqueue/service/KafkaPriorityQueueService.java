@@ -1,17 +1,16 @@
 package com.mewada.rohit.kafkapriorityqueue.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mewada.rohit.kafkapriorityqueue.model.KafkaWaitRecord;
 import com.mewada.rohit.kafkapriorityqueue.model.QueueData;
+import com.mewada.rohit.kafkapriorityqueue.model.Records;
 import com.mewada.rohit.kafkapriorityqueue.repository.KafkaPriorityQueueRepository;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.example.model.KafkaWaitRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
 
 @Service
 @Slf4j
@@ -21,24 +20,25 @@ public class KafkaPriorityQueueService {
     private KafkaPriorityQueueRepository repository;
 
     @SneakyThrows
-    public List<KafkaWaitRecord> getRecords() {
+    public Records getRecords() {
 
         Timestamp currentTime = new Timestamp(System.currentTimeMillis());
 
-        List<KafkaWaitRecord> records = new ArrayList<>();
+        Records records = new Records();
 
         ObjectMapper mapper = new ObjectMapper();
 
         for(QueueData data : repository.getRecords(currentTime)){
 
             KafkaWaitRecord record = mapper.readValue(data.getRecord(),KafkaWaitRecord.class);
-            records.add(record);
+            records.getRecordList().add(record);
 
             //if data is processed deleting from db
             repository.delete(data);
 
         }
 
+//        log.info("Get Records = {}",records.getRecordList());
         return records;
     }
 
@@ -60,6 +60,7 @@ public class KafkaPriorityQueueService {
 
         queueData.setRecord(record);
 
+        log.info("Post Record = {}",queueData);
         return repository.save(queueData);
     }
 }
